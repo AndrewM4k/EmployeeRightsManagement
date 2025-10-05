@@ -1,0 +1,120 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+}
+
+/* Custom styles for the application */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+.right-checkbox {
+    margin-right: 8px;
+}
+
+#rightsContainer {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.k-grid {
+    border-radius: 0.375rem;
+}
+
+.k-grid-header {
+    background-color: #f8f9fa;
+}
+
+.k-grid-header .k-header {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.k-grid tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+.modal-lg {
+    max-width: 900px;
+}
+
+/* Search and filter section styling */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Button styling */
+.btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+/* Grid action buttons */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Employee details page styling */
+.card-header h4 {
+    margin: 0;
+    color: #495057;
+}
+
+.card-body p {
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .modal-lg {
+        max-width: 95%;
+    }
+    
+    #rightsContainer .col-md-6 {
+        margin-bottom: 10px;
+    }
+}

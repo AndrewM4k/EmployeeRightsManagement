@@ -1,0 +1,266 @@
+@{
+    ViewData["Title"] = "Employee Details";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Employee Details</h2>
+            <p>View detailed information about the employee and their assigned roles and rights.</p>
+        </div>
+    </div>
+
+    <!-- Employee Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Employee Information</h5>
+                </div>
+                <div class="card-body">
+                    <div id="employeeInfo">
+                        <!-- Employee info will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Separator Line -->
+    <hr class="my-4" style="border-top: 2px solid #dee2e6;">
+
+    <!-- Roles Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4>Assigned Roles</h4>
+            <div id="rolesList">
+                <!-- Roles will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Separator Line -->
+    <hr class="my-4" style="border-top: 2px solid #dee2e6;">
+
+    <!-- All Rights Section -->
+    <div class="row">
+        <div class="col-12">
+            <h4>All Employee Rights</h4>
+            <p>Complete list of all rights assigned to this employee through their roles.</p>
+            <div id="allRightsGrid"></div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="/Employee" class="btn btn-secondary">Back to Employee List</a>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .role-card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+        
+        .rights-list {
+            margin-top: 0.5rem;
+        }
+        
+        .right-item {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .right-category {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .right-type {
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Loading employee details...");
+            
+            // Get employee ID from URL
+            var pathArray = window.location.pathname.split('/');
+            var employeeId = pathArray[pathArray.length - 1];
+            
+            loadEmployeeDetails(employeeId);
+        });
+
+        function loadEmployeeDetails(employeeId) {
+            $.ajax({
+                url: "/Employee/GetEmployee/" + employeeId,
+                type: "GET",
+                success: function (data) {
+                    console.log("Employee details data:", data);
+                    
+                    if (data) {
+                        displayEmployeeInfo(data);
+                        displayRoles(data.roles);
+                        displayAllRights(data.roles);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error loading employee details:", error);
+                    alert("Error loading employee details: " + error);
+                }
+            });
+        }
+
+        function displayEmployeeInfo(employee) {
+            var html = `
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Name:</strong> ${employee.fullName}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Email:</strong> ${employee.email}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Department:</strong> ${employee.department}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Position:</strong> ${employee.position}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <strong>Status:</strong> ${employee.isActive ? 'Active' : 'Inactive'}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Created:</strong> ${new Date(employee.createdDate).toLocaleDateString()}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Employee ID:</strong> ${employee.id}
+                    </div>
+                </div>
+            `;
+            $("#employeeInfo").html(html);
+        }
+
+        function displayRoles(roles) {
+            var html = "";
+            
+            if (roles && roles.length > 0) {
+                roles.forEach(function(role) {
+                    html += `
+                        <div class="role-card">
+                            <h6><strong>${role.name}</strong></h6>
+                            <p class="mb-2">${role.description || 'No description'}</p>
+                            <small class="text-muted">Assigned: ${new Date(role.assignedDate).toLocaleDateString()}</small>
+                            <div class="rights-list">
+                                <strong>Rights (${role.rights.length}):</strong>
+                    `;
+                    
+                    if (role.rights && role.rights.length > 0) {
+                        role.rights.forEach(function(right) {
+                            html += `
+                                <div class="right-item">
+                                    <span class="right-category">${right.category}</span> - 
+                                    <strong>${right.name}</strong> 
+                                    <span class="right-type">(${right.type})</span>
+                                    <br>
+                                    <small>${right.description || 'No description'}</small>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += `<div class="text-muted">No rights assigned to this role.</div>`;
+                    }
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html = `<div class="text-muted">No roles assigned to this employee.</div>`;
+            }
+            
+            $("#rolesList").html(html);
+        }
+
+        function displayAllRights(roles) {
+            // Flatten all rights from all roles
+            var allRights = [];
+            if (roles && roles.length > 0) {
+                roles.forEach(function(role) {
+                    if (role.rights && role.rights.length > 0) {
+                        role.rights.forEach(function(right) {
+                            allRights.push({
+                                name: right.name,
+                                description: right.description,
+                                category: right.category,
+                                type: right.type,
+                                roleName: role.name,
+                                assignedDate: role.assignedDate
+                            });
+                        });
+                    }
+                });
+            }
+
+            if (allRights.length > 0) {
+                $("#allRightsGrid").kendoGrid({
+                    dataSource: {
+                        data: allRights
+                    },
+                    height: 400,
+                    sortable: true,
+                    filterable: {
+                        mode: "row"
+                    },
+                    pageable: {
+                        refresh: true,
+                        pageSizes: [10, 20, 50],
+                        buttonCount: 5
+                    },
+                    columns: [
+                        { field: "name", title: "Right Name", width: "200px" },
+                        { field: "description", title: "Description", width: "300px" },
+                        { field: "category", title: "Category", width: "150px" },
+                        { field: "type", title: "Type", width: "120px" },
+                        { field: "roleName", title: "Assigned Through Role", width: "200px" },
+                        { 
+                            field: "assignedDate", 
+                            title: "Assigned Date", 
+                            width: "150px",
+                            template: "#= kendo.toString(kendo.parseDate(assignedDate), 'MM/dd/yyyy') #"
+                        }
+                    ]
+                });
+            } else {
+                $("#allRightsGrid").html("<div class='text-muted'>No rights assigned to this employee.</div>");
+            }
+        }
+    </script>
+}

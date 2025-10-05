@@ -1,0 +1,201 @@
+@{
+    ViewData["Title"] = "Rights Management";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Rights Management</h2>
+            <p>Manage system rights and permissions.</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="nameFilter">Search by Name:</label>
+                <input type="text" id="nameFilter" class="form-control" placeholder="Enter right name..." />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="categoryFilter">Filter by Category:</label>
+                <input type="text" id="categoryFilter" class="form-control" placeholder="Enter category..." />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="typeFilter">Filter by Type:</label>
+                <input type="text" id="typeFilter" class="form-control" placeholder="Enter type..." />
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <button id="searchBtn" class="btn btn-primary">Search</button>
+            <button id="clearBtn" class="btn btn-secondary">Clear</button>
+            <button id="addRightBtn" class="btn btn-success">Add New Right</button>
+        </div>
+    </div>
+
+    <!-- Separator Line -->
+    <hr class="my-4" style="border-top: 2px solid #dee2e6;">
+
+    <!-- Rights Grid -->
+    <div class="row">
+        <div class="col-12">
+            <div id="rightsGrid"></div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Fix Kendo Grid sort icons */
+        .k-grid-header .k-header .k-link .k-icon {
+            font-size: 12px !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+        
+        .k-grid-header .k-header .k-link .k-icon.k-i-sort-asc-sm,
+        .k-grid-header .k-header .k-link .k-icon.k-i-sort-desc-sm {
+            font-size: 12px !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+        
+        /* Fix filter menu positioning */
+        .k-filter-menu {
+            z-index: 10000 !important;
+        }
+        
+        /* Consistent header styling */
+        .k-grid-header .k-header {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Initializing Rights Grid...");
+            
+            // Initialize Kendo Grid
+            $("#rightsGrid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/Rights/GetRights",
+                            type: "GET",
+                            dataType: "json"
+                        }
+                    },
+                    schema: {
+                        model: {
+                            id: "id",
+                            fields: {
+                                id: { type: "number" },
+                                name: { type: "string" },
+                                description: { type: "string" },
+                                category: { type: "string" },
+                                type: { type: "string" },
+                                isActive: { type: "boolean" },
+                                createdDate: { type: "date" }
+                            }
+                        }
+                    },
+                    pageSize: 20
+                },
+                height: 600,
+                sortable: true,
+                filterable: {
+                    mode: "row"
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: [10, 20, 50, 100],
+                    buttonCount: 5
+                },
+                columns: [
+                    { field: "id", title: "ID", width: "80px" },
+                    { field: "name", title: "Name", width: "200px" },
+                    { field: "description", title: "Description", width: "300px" },
+                    { field: "category", title: "Category", width: "150px" },
+                    { field: "type", title: "Type", width: "120px" },
+                    { 
+                        field: "isActive", 
+                        title: "Active", 
+                        width: "100px",
+                        template: "#= isActive ? 'Yes' : 'No' #"
+                    },
+                    { 
+                        field: "createdDate", 
+                        title: "Created Date", 
+                        width: "150px",
+                        template: "#= kendo.toString(kendo.parseDate(createdDate), 'MM/dd/yyyy') #"
+                    }
+                ],
+                dataBound: function(e) {
+                    console.log("Rights Grid data bound. Records:", e.sender.dataSource.data().length);
+                },
+                error: function(e) {
+                    console.error("Rights Grid error:", e);
+                }
+            });
+
+            // Search functionality
+            $("#searchBtn").click(function () {
+                var name = $("#nameFilter").val();
+                var category = $("#categoryFilter").val();
+                var type = $("#typeFilter").val();
+
+                var grid = $("#rightsGrid").data("kendoGrid");
+                
+                $.ajax({
+                    url: "/Rights/SearchRights",
+                    type: "GET",
+                    data: {
+                        name: name,
+                        category: category,
+                        type: type
+                    },
+                    success: function (data) {
+                        console.log("Search results:", data);
+                        grid.dataSource.data(data);
+                    },
+                    error: function (xhr, status, error) {
+                        alert("Error searching rights: " + error);
+                    }
+                });
+            });
+
+            // Clear filters
+            $("#clearBtn").click(function () {
+                $("#nameFilter").val("");
+                $("#categoryFilter").val("");
+                $("#typeFilter").val("");
+                
+                var grid = $("#rightsGrid").data("kendoGrid");
+                grid.dataSource.read();
+            });
+
+            // Add new right
+            $("#addRightBtn").click(function () {
+                // TODO: Implement add right modal
+                alert("Add Right functionality will be implemented");
+            });
+
+            // Enter key search
+            $("#nameFilter, #categoryFilter, #typeFilter").keypress(function (e) {
+                if (e.which === 13) {
+                    $("#searchBtn").click();
+                }
+            });
+        });
+    </script>
+}

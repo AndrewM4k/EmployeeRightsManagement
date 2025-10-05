@@ -1,0 +1,326 @@
+@{
+    ViewData["Title"] = "Edit Role";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Edit Role</h2>
+            <p>Modify role information and assign rights to this role.</p>
+        </div>
+    </div>
+
+    <!-- Role Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Role Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="roleName">Role Name:</label>
+                                <input type="text" id="roleName" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="roleDescription">Description:</label>
+                                <input type="text" id="roleDescription" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <button id="saveRoleBtn" class="btn btn-primary">Save Role</button>
+                            <a href="/Roles" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Separator Line -->
+    <hr class="my-4" style="border-top: 2px solid #dee2e6;">
+
+    <!-- Rights Assignment -->
+    <div class="row">
+        <div class="col-12">
+            <h4>Assign Rights to Role</h4>
+            <p>Select the rights that should be assigned to this role.</p>
+            
+            <!-- Search and Filter -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="rightSearch">Search Rights:</label>
+                        <input type="text" id="rightSearch" class="form-control" placeholder="Search rights..." />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="categoryFilter">Filter by Category:</label>
+                        <select id="categoryFilter" class="form-control">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="typeFilter">Filter by Type:</label>
+                        <select id="typeFilter" class="form-control">
+                            <option value="">All Types</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rights Grid -->
+            <div id="rightsGrid"></div>
+            
+            <!-- Save Rights Button -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button id="saveRightsBtn" class="btn btn-success">Save Rights Assignment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        let roleId;
+        let allRights = [];
+        let selectedRights = [];
+
+        $(document).ready(function () {
+            console.log("Loading role edit page...");
+            
+            // Get role ID from URL
+            var pathArray = window.location.pathname.split('/');
+            roleId = pathArray[pathArray.length - 1];
+            
+            loadRoleData();
+            loadRightsData();
+        });
+
+        function loadRoleData() {
+            $.ajax({
+                url: "/Roles/GetRole/" + roleId,
+                type: "GET",
+                success: function (data) {
+                    console.log("Role data:", data);
+                    
+                    if (data) {
+                        $("#roleName").val(data.name);
+                        $("#roleDescription").val(data.description);
+                        
+                        // Store currently assigned rights
+                        selectedRights = data.rights.map(r => r.id);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error loading role:", error);
+                    alert("Error loading role: " + error);
+                }
+            });
+        }
+
+        function loadRightsData() {
+            $.ajax({
+                url: "/Roles/GetAllRights",
+                type: "GET",
+                success: function (data) {
+                    console.log("Rights data:", data);
+                    allRights = data;
+                    
+                    // Populate category and type filters
+                    populateFilters(data);
+                    
+                    // Initialize rights grid
+                    initializeRightsGrid(data);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error loading rights:", error);
+                    alert("Error loading rights: " + error);
+                }
+            });
+        }
+
+        function populateFilters(rights) {
+            // Get unique categories
+            var categories = [...new Set(rights.map(r => r.category))].sort();
+            categories.forEach(function(category) {
+                $("#categoryFilter").append(`<option value="${category}">${category}</option>`);
+            });
+
+            // Get unique types
+            var types = [...new Set(rights.map(r => r.type))].sort();
+            types.forEach(function(type) {
+                $("#typeFilter").append(`<option value="${type}">${type}</option>`);
+            });
+        }
+
+        function initializeRightsGrid(rights) {
+            $("#rightsGrid").kendoGrid({
+                dataSource: {
+                    data: rights
+                },
+                height: 400,
+                sortable: true,
+                filterable: {
+                    mode: "row"
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: [20, 50, 100],
+                    buttonCount: 5
+                },
+                columns: [
+                    {
+                        title: "Select",
+                        width: "80px",
+                        template: "<input type='checkbox' class='right-checkbox' data-right-id='#= id #' #= selectedRights.indexOf(id) !== -1 ? 'checked' : '' # />"
+                    },
+                    { field: "name", title: "Right Name", width: "200px" },
+                    { field: "description", title: "Description", width: "300px" },
+                    { field: "category", title: "Category", width: "150px" },
+                    { field: "type", title: "Type", width: "120px" }
+                ],
+                dataBound: function(e) {
+                    // Update checkboxes based on selected rights
+                    $('.right-checkbox').each(function() {
+                        var rightId = parseInt($(this).data('right-id'));
+                        $(this).prop('checked', selectedRights.indexOf(rightId) !== -1);
+                    });
+                }
+            });
+        }
+
+        // Search functionality
+        $("#rightSearch").on('keyup', function() {
+            var searchTerm = $(this).val().toLowerCase();
+            var category = $("#categoryFilter").val();
+            var type = $("#typeFilter").val();
+            
+            filterRights(searchTerm, category, type);
+        });
+
+        $("#categoryFilter, #typeFilter").on('change', function() {
+            var searchTerm = $("#rightSearch").val().toLowerCase();
+            var category = $("#categoryFilter").val();
+            var type = $("#typeFilter").val();
+            
+            filterRights(searchTerm, category, type);
+        });
+
+        function filterRights(searchTerm, category, type) {
+            var filteredRights = allRights.filter(function(right) {
+                var matchesSearch = right.name.toLowerCase().includes(searchTerm) || 
+                                  right.description.toLowerCase().includes(searchTerm);
+                var matchesCategory = !category || right.category === category;
+                var matchesType = !type || right.type === type;
+                
+                return matchesSearch && matchesCategory && matchesType;
+            });
+
+            var grid = $("#rightsGrid").data("kendoGrid");
+            grid.dataSource.data(filteredRights);
+        }
+
+        // Handle checkbox changes
+        $(document).on('change', '.right-checkbox', function() {
+            var rightId = parseInt($(this).data('right-id'));
+            var isChecked = $(this).is(':checked');
+            
+            if (isChecked) {
+                if (selectedRights.indexOf(rightId) === -1) {
+                    selectedRights.push(rightId);
+                }
+            } else {
+                var index = selectedRights.indexOf(rightId);
+                if (index !== -1) {
+                    selectedRights.splice(index, 1);
+                }
+            }
+        });
+
+        // Save role information
+        $("#saveRoleBtn").click(function() {
+            var roleData = {
+                Id: roleId,
+                Name: $("#roleName").val(),
+                Description: $("#roleDescription").val()
+            };
+
+            $.ajax({
+                url: "/Roles/UpdateRole",
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(roleData),
+                success: function(response) {
+                    if (response.success) {
+                        alert("Role updated successfully!");
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("Error updating role: " + error);
+                }
+            });
+        });
+
+        // Save rights assignment
+        $("#saveRightsBtn").click(function() {
+            var rightsData = {
+                RoleId: roleId,
+                RightIds: selectedRights
+            };
+
+            $.ajax({
+                url: "/Roles/AssignRightsToRole",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(rightsData),
+                success: function(response) {
+                    if (response.success) {
+                        alert("Rights assigned successfully!");
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert("Error assigning rights: " + error);
+                }
+            });
+        });
+    </script>
+}

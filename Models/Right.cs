@@ -1,0 +1,29 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace EmployeeRightsManagement.Models
+{
+    public class Right
+    {
+        public int Id { get; set; }
+        
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+        
+        [StringLength(500)]
+        public string Description { get; set; } = string.Empty;
+        
+        [StringLength(50)]
+        public string Category { get; set; } = string.Empty;
+        
+        [StringLength(50)]
+        public string Type { get; set; } = string.Empty;
+        
+        public bool IsActive { get; set; } = true;
+        
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        
+        // Navigation properties
+        public virtual ICollection<RoleRight> RoleRights { get; set; } = new List<RoleRight>();
+    }
+}

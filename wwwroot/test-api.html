@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button id="testBtn">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        $(document).ready(function() {
+            $("#testBtn").click(function() {
+                $.ajax({
+                    url: "/Home/GetEmployees",
+                    type: "GET",
+                    success: function(data) {
+                        console.log("API Response:", data);
+                        $("#result").html("<pre>" + JSON.stringify(data, null, 2) + "</pre>");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("API Error:", error);
+                        $("#result").html("<p>Error: " + error + "</p>");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
