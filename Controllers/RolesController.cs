@@ -2,31 +2,44 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.Models;
+using EmployeeRightsManagement.Services;
 
 namespace EmployeeRightsManagement.Controllers
 {
     public class RolesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserContext _currentUser;
 
-        public RolesController(ApplicationDbContext context)
+        public RolesController(ApplicationDbContext context, ICurrentUserContext currentUser)
         {
             _context = context;
+            _currentUser = currentUser;
         }
 
         public IActionResult Index()
         {
+            if (!_currentUser.IsAdmin)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            ViewBag.IsAdmin = _currentUser.IsAdmin;
             return View();
         }
 
         public IActionResult Edit(int id)
         {
+            if (!_currentUser.IsAdmin)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             return View();
         }
 
         [HttpGet]
         public async Task<IActionResult> GetRoles()
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var roles = await _context.Roles
                 .Where(r => r.IsActive)
                 .Select(r => new
@@ -46,6 +59,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRole(int id)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var role = await _context.Roles
                 .Include(r => r.RoleRights)
                     .ThenInclude(rr => rr.Right)
@@ -77,6 +91,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllRights()
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var rights = await _context.Rights
                 .Where(r => r.IsActive)
                 .OrderBy(r => r.Category)
@@ -97,55 +112,59 @@ namespace EmployeeRightsManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRole([FromBody] Role role)
         {
-            if (ModelState.IsValid)
+            if (!_currentUser.IsAdmin) return Forbid();
+            if (!ModelState.IsValid)
             {
-                role.CreatedDate = DateTime.Now;
-                role.IsActive = true;
-                _context.Roles.Add(role);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Role created successfully", roleId = role.Id });
+                return Json(new { success = false, message = "Invalid data" });
             }
-            return Json(new { success = false, message = "Invalid data" });
+
+            role.CreatedDate = DateTime.Now;
+            role.IsActive = true;
+            _context.Roles.Add(role);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Role created successfully", roleId = role.Id });
         }
 
         [HttpPut]
         public async Task<IActionResult> UpdateRole([FromBody] Role role)
         {
-            if (ModelState.IsValid)
+            if (!_currentUser.IsAdmin) return Forbid();
+            if (!ModelState.IsValid)
             {
-                _context.Roles.Update(role);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Role updated successfully" });
+                return Json(new { success = false, message = "Invalid data" });
             }
-            return Json(new { success = false, message = "Invalid data" });
+
+            _context.Roles.Update(role);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Role updated successfully" });
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteRole(int id)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var role = await _context.Roles.FindAsync(id);
-            if (role != null)
+            if (role == null)
             {
-                role.IsActive = false;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Role deleted successfully" });
+                return Json(new { success = false, message = "Role not found" });
             }
-            return Json(new { success = false, message = "Role not found" });
+
+            role.IsActive = false;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Role deleted successfully" });
         }
 
         [HttpPost]
         public async Task<IActionResult> AssignRightsToRole([FromBody] AssignRightsRequest request)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             try
             {
-                // Remove existing rights for this role
                 var existingRights = await _context.RoleRights
                     .Where(rr => rr.RoleId == request.RoleId)
                     .ToListAsync();
-                
                 _context.RoleRights.RemoveRange(existingRights);
 
-                // Add new rights
                 var roleRights = request.RightIds.Select(rightId => new RoleRight
                 {
                     RoleId = request.RoleId,
@@ -156,7 +175,6 @@ namespace EmployeeRightsManagement.Controllers
 
                 _context.RoleRights.AddRange(roleRights);
                 await _context.SaveChangesAsync();
-
                 return Json(new { success = true, message = "Rights assigned successfully" });
             }
             catch (Exception ex)
@@ -172,3 +190,6 @@ namespace EmployeeRightsManagement.Controllers
         public List<int> RightIds { get; set; } = new List<int>();
     }
 }
+
+
+

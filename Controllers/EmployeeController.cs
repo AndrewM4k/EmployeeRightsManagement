@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.Models;
+using EmployeeRightsManagement.Services;
 using EmployeeRightsManagement.ViewModels;
 
 namespace EmployeeRightsManagement.Controllers
@@ -9,14 +10,19 @@ namespace EmployeeRightsManagement.Controllers
     public class EmployeeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserContext _currentUser;
 
-        public EmployeeController(ApplicationDbContext context)
+        public EmployeeController(ApplicationDbContext context, ICurrentUserContext currentUser)
         {
             _context = context;
+            _currentUser = currentUser;
         }
 
         public IActionResult Index()
         {
+            if (!_currentUser.IsAdmin)
+                return RedirectToAction("Index", "Home");
+            ViewBag.IsAdmin = _currentUser.IsAdmin;
             return View();
         }
 
@@ -114,6 +120,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateEmployee([FromBody] Employee employee)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             if (ModelState.IsValid)
             {
                 employee.CreatedDate = DateTime.Now;
@@ -128,6 +135,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateEmployee([FromBody] Employee employee)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             if (ModelState.IsValid)
             {
                 _context.Employees.Update(employee);
@@ -140,6 +148,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var employee = await _context.Employees.FindAsync(id);
             if (employee != null)
             {
@@ -153,6 +162,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> AssignRolesToEmployee([FromBody] AssignRolesRequest request)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             try
             {
                 // Remove existing roles for this employee
@@ -189,3 +199,6 @@ namespace EmployeeRightsManagement.Controllers
         public List<int> RoleIds { get; set; } = new List<int>();
     }
 }
+
+
+

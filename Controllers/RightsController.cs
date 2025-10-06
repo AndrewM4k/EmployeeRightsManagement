@@ -2,26 +2,33 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.Models;
+using EmployeeRightsManagement.Services;
 
 namespace EmployeeRightsManagement.Controllers
 {
     public class RightsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserContext _currentUser;
 
-        public RightsController(ApplicationDbContext context)
+        public RightsController(ApplicationDbContext context, ICurrentUserContext currentUser)
         {
             _context = context;
+            _currentUser = currentUser;
         }
 
         public IActionResult Index()
         {
+            if (!_currentUser.IsAdmin)
+                return RedirectToAction("Index", "Home");
+            ViewBag.IsAdmin = _currentUser.IsAdmin;
             return View();
         }
 
         [HttpGet]
         public async Task<IActionResult> GetRights()
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var rights = await _context.Rights
                 .Where(r => r.IsActive)
                 .OrderBy(r => r.Category)
@@ -44,6 +51,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchRights(string? name, string? category, string? type)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var query = _context.Rights.Where(r => r.IsActive).AsQueryable();
 
             if (!string.IsNullOrEmpty(name))
@@ -82,6 +90,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRight([FromBody] Right right)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             if (ModelState.IsValid)
             {
                 right.CreatedDate = DateTime.Now;
@@ -96,6 +105,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateRight([FromBody] Right right)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             if (ModelState.IsValid)
             {
                 _context.Rights.Update(right);
@@ -108,6 +118,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteRight(int id)
         {
+            if (!_currentUser.IsAdmin) return Forbid();
             var right = await _context.Rights.FindAsync(id);
             if (right != null)
             {
@@ -119,3 +130,4 @@ namespace EmployeeRightsManagement.Controllers
         }
     }
 }
+

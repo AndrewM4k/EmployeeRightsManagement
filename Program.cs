@@ -2,8 +2,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.Models;
+using EmployeeRightsManagement.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Demo current user context registration (role from config: Admin/User)
+builder.Services.AddSingleton<ICurrentUserContext>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var role = cfg.GetValue<string>("DemoUser:Role") ?? "User";
+    return new DemoCurrentUserContext(role);
+});
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

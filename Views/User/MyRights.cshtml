@@ -42,14 +42,6 @@
     <!-- Separator Line -->
     <hr class="my-4" style="border-top: 2px solid #dee2e6;">
 
-    <!-- All Rights Section -->
-    <div class="row">
-        <div class="col-12">
-            <h4>All My Rights</h4>
-            <p>Complete list of all rights assigned to you through your roles.</p>
-            <div id="allRightsGrid"></div>
-        </div>
-    </div>
 </div>
 
 @section Styles {
@@ -111,16 +103,21 @@
                 type: "GET",
                 success: function (data) {
                     console.log("My rights data:", data);
-                    
-                    if (data) {
+                    if (!data) {
+                        $("#employeeInfo").html('<div class="text-muted">Данные не найдены.</div>');
+                        $("#rolesList").html('');
+                        return;
+                    }
+                    if (data.employee) {
                         displayEmployeeInfo(data.employee);
+                    }
+                    if (data.roles) {
                         displayRoles(data.roles);
-                        displayAllRights(data.allRights);
                     }
                 },
                 error: function (xhr, status, error) {
                     console.error("Error loading rights:", error);
-                    alert("Error loading your rights: " + error);
+                    $("#employeeInfo").html('<div class="text-danger">Ошибка загрузки прав: ' + error + '</div>');
                 }
             });
         }
@@ -147,25 +144,23 @@
 
         function displayRoles(roles) {
             var html = "";
-            
-            if (roles && roles.length > 0) {
+            if (Array.isArray(roles) && roles.length > 0) {
                 roles.forEach(function(role) {
                     html += `
                         <div class="role-card">
-                            <h6><strong>${role.name}</strong></h6>
+                            <h6><strong>${role.name || ''}</strong></h6>
                             <p class="mb-2">${role.description || 'No description'}</p>
-                            <small class="text-muted">Assigned: ${new Date(role.assignedDate).toLocaleDateString()}</small>
+                            <small class="text-muted">Assigned: ${role.assignedDate ? new Date(role.assignedDate).toLocaleDateString() : '-'}</small>
                             <div class="rights-list">
-                                <strong>Rights (${role.rights.length}):</strong>
+                                <strong>Rights (${(role.rights && role.rights.length) ? role.rights.length : 0}):</strong>
                     `;
-                    
                     if (role.rights && role.rights.length > 0) {
                         role.rights.forEach(function(right) {
                             html += `
                                 <div class="right-item">
-                                    <span class="right-category">${right.category}</span> - 
-                                    <strong>${right.name}</strong> 
-                                    <span class="right-type">(${right.type})</span>
+                                    <span class="right-category">${right.category || ''}</span> - 
+                                    <strong>${right.name || ''}</strong>
+                                    <span class="right-type">(${right.type || ''})</span>
                                     <br>
                                     <small>${right.description || 'No description'}</small>
                                 </div>
@@ -174,52 +169,17 @@
                     } else {
                         html += `<div class="text-muted">No rights assigned to this role.</div>`;
                     }
-                    
-                    html += `
-                            </div>
-                        </div>
-                    `;
+                    html += `</div></div>`;
                 });
             } else {
                 html = `<div class="text-muted">No roles assigned.</div>`;
             }
-            
             $("#rolesList").html(html);
         }
 
-        function displayAllRights(allRights) {
-            if (allRights && allRights.length > 0) {
-                $("#allRightsGrid").kendoGrid({
-                    dataSource: {
-                        data: allRights
-                    },
-                    height: 400,
-                    sortable: true,
-                    filterable: {
-                        mode: "row"
-                    },
-                    pageable: {
-                        refresh: true,
-                        pageSizes: [10, 20, 50],
-                        buttonCount: 5
-                    },
-                    columns: [
-                        { field: "name", title: "Right Name", width: "200px" },
-                        { field: "description", title: "Description", width: "300px" },
-                        { field: "category", title: "Category", width: "150px" },
-                        { field: "type", title: "Type", width: "120px" },
-                        { field: "roleName", title: "Assigned Through Role", width: "200px" },
-                        { 
-                            field: "assignedDate", 
-                            title: "Assigned Date", 
-                            width: "150px",
-                            template: "#= kendo.toString(kendo.parseDate(assignedDate), 'MM/dd/yyyy') #"
-                        }
-                    ]
-                });
-            } else {
-                $("#allRightsGrid").html("<div class='text-muted'>No rights assigned.</div>");
-            }
-        }
     </script>
 }
+
+
+
+

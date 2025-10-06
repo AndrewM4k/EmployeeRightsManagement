@@ -26,6 +26,13 @@
         </div>
         <div class="col-md-4">
             <div class="form-group">
+                <label for="roleIdsFilter">Filter by Roles (IDs):</label>
+                <input type="text" id="roleIdsFilter" class="form-control" placeholder="e.g. 1,2,3" />
+                <small class="text-muted">Comma-separated Role IDs</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
                 <label for="rightFilter">Filter by Right:</label>
                 <input type="text" id="rightFilter" class="form-control" placeholder="Enter right name..." />
             </div>
@@ -181,14 +188,20 @@
                     data: {
                         name: name,
                         role: role,
-                        right: right
+                        right: right,
+                        roleIds: parseRoleIds($("#roleIdsFilter").val())
                     },
                     success: function (data) {
                         console.log("Search results:", data);
-                        grid.dataSource.data(data);
+                        if (data && data.error) {
+                            alert("Search error: " + data.error);
+                        } else {
+                            grid.dataSource.data(data);
+                        }
                     },
                     error: function (xhr, status, error) {
-                        alert("Error searching employees: " + error);
+                        console.error("AJAX Error:", xhr.responseText);
+                        alert("Error searching employees: " + error + "\nDetails: " + xhr.responseText);
                     }
                 });
             });
@@ -198,6 +211,7 @@
                 $("#nameFilter").val("");
                 $("#roleFilter").val("");
                 $("#rightFilter").val("");
+                $("#roleIdsFilter").val("");
                 
                 var grid = $("#employeeGrid").data("kendoGrid");
                 grid.dataSource.read();
@@ -209,6 +223,10 @@
                     $("#searchBtn").click();
                 }
             });
+            function parseRoleIds(val){
+                if(!val) return [];
+                return val.split(',').map(function(x){ return parseInt(x.trim()); }).filter(function(n){ return !isNaN(n); });
+            }
         });
     </script>
 }
