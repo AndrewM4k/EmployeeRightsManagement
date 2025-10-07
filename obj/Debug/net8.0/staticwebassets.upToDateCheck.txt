@@ -3,3 +3,4 @@ wwwroot\js\site.js
 wwwroot\lib\kendo\kendo-ui-license.js
 wwwroot\lib\kendo\kendo.all.min.js
 wwwroot\test-api.html
+wwwroot\lib\kendo\kendo.default-v2.min.css

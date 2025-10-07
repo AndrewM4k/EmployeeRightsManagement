@@ -1,0 +1,231 @@
+@{
+    ViewData["Title"] = "Employee Management";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Employee Management</h2>
+            <p>Manage employee roles and rights in the system.</p>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="nameFilter">Search by Name:</label>
+                <input type="text" id="nameFilter" class="form-control" placeholder="Enter employee name..." />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="roleFilter">Filter by Role:</label>
+                <input type="text" id="roleFilter" class="form-control" placeholder="Enter role name..." />
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="roleIdsFilter">Filter by Roles (IDs):</label>
+                <input type="text" id="roleIdsFilter" class="form-control" placeholder="e.g. 1,2,3" />
+                <small class="text-muted">Comma-separated Role IDs</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="rightFilter">Filter by Right:</label>
+                <input type="text" id="rightFilter" class="form-control" placeholder="Enter right name..." />
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <button id="searchBtn" class="btn btn-primary">Search</button>
+            <button id="clearBtn" class="btn btn-secondary">Clear</button>
+        </div>
+    </div>
+
+    <!-- Separator Line -->
+    <hr class="my-4" style="border-top: 2px solid #dee2e6;">
+
+    <!-- Employee Grid -->
+    <div class="row">
+        <div class="col-12">
+            <div id="employeeGrid"></div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Fix Kendo Grid sort icons */
+        .k-grid-header .k-header .k-link .k-icon {
+            font-size: 12px !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+        
+        .k-grid-header .k-header .k-link .k-icon.k-i-sort-asc-sm,
+        .k-grid-header .k-header .k-link .k-icon.k-i-sort-desc-sm {
+            font-size: 12px !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+        
+        /* Fix filter menu positioning */
+        .k-filter-menu {
+            z-index: 10000 !important;
+        }
+        
+        /* Consistent header styling */
+        .k-grid-header .k-header {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Initializing Kendo Grid...");
+            
+            // First, let's test the API directly
+            $.ajax({
+                url: "/Home/GetEmployees",
+                type: "GET",
+                success: function (data) {
+                    console.log("API Response:", data);
+                    console.log("Data length:", data ? data.length : "No data");
+                    
+                    if (data && data.length > 0) {
+                        console.log("First employee:", data[0]);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("API Error:", error);
+                }
+            });
+
+            // Initialize Kendo Grid with proper configuration
+            $("#employeeGrid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/Home/GetEmployees",
+                            type: "GET",
+                            dataType: "json"
+                        }
+                    },
+                    schema: {
+                        model: {
+                            id: "id",
+                            fields: {
+                                id: { type: "number" },
+                                firstName: { type: "string" },
+                                lastName: { type: "string" },
+                                fullName: { type: "string" },
+                                email: { type: "string" },
+                                department: { type: "string" },
+                                position: { type: "string" },
+                                isActive: { type: "boolean" },
+                                createdDate: { type: "date" }
+                            }
+                        }
+                    },
+                    pageSize: 10
+                },
+                height: 500,
+                sortable: true,
+                filterable: {
+                    mode: "row"
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: [5, 10, 20, 50],
+                    buttonCount: 5
+                },
+                columns: [
+                    { field: "id", title: "ID", width: "80px" },
+                    { field: "fullName", title: "Full Name", width: "200px" },
+                    { field: "email", title: "Email", width: "250px" },
+                    { field: "department", title: "Department", width: "150px" },
+                    { field: "position", title: "Position", width: "200px" },
+                    { 
+                        field: "isActive", 
+                        title: "Active", 
+                        width: "100px",
+                        template: "#= isActive ? 'Yes' : 'No' #"
+                    },
+                    { 
+                        field: "createdDate", 
+                        title: "Created Date", 
+                        width: "150px",
+                        template: "#= kendo.toString(kendo.parseDate(createdDate), 'MM/dd/yyyy') #"
+                    }
+                ],
+                dataBound: function(e) {
+                    console.log("Grid data bound. Records:", e.sender.dataSource.data().length);
+                    console.log("Grid data:", e.sender.dataSource.data());
+                },
+                error: function(e) {
+                    console.error("Grid error:", e);
+                }
+            });
+
+            // Search functionality
+            $("#searchBtn").click(function () {
+                var name = $("#nameFilter").val();
+                var role = $("#roleFilter").val();
+                var right = $("#rightFilter").val();
+
+                var grid = $("#employeeGrid").data("kendoGrid");
+                
+                $.ajax({
+                    url: "/Home/SearchEmployees",
+                    type: "GET",
+                    data: buildSearchQuery(name, role, right, $("#roleIdsFilter").val()),
+                    success: function (data) {
+                        console.log("Search results:", data);
+                        if (data && data.error) {
+                            alert("Search error: " + data.error);
+                        } else {
+                            grid.dataSource.data(data);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AJAX Error:", xhr.responseText);
+                        alert("Error searching employees: " + error + "\nDetails: " + xhr.responseText);
+                    }
+                });
+            });
+
+            // Clear filters
+            $("#clearBtn").click(function () {
+                $("#nameFilter").val("");
+                $("#roleFilter").val("");
+                $("#rightFilter").val("");
+                $("#roleIdsFilter").val("");
+                
+                var grid = $("#employeeGrid").data("kendoGrid");
+                grid.dataSource.read();
+            });
+
+            // Enter key search
+            $("#nameFilter, #roleFilter, #rightFilter").keypress(function (e) {
+                if (e.which === 13) {
+                    $("#searchBtn").click();
+                }
+            });
+            function buildSearchQuery(name, role, right, roleIdsRaw){
+                var query = { name: name, role: role, right: right };
+                if (roleIdsRaw && roleIdsRaw.trim().length){
+                    // Send as a single string; backend now parses comma/space/semicolon separated lists
+                    query.roleIds = roleIdsRaw;
+                }
+                return query;
+            }
+        });
+    </script>
+}

@@ -1,0 +1,316 @@
+@{
+    ViewData["Title"] = "Employee Management";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Employee Management</h2>
+            <p>Manage employee information and role assignments.</p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <button id="addEmployeeBtn" class="btn btn-success">Add New Employee</button>
+        </div>
+    </div>
+
+    <!-- Separator Line -->
+    <hr class="my-4" style="border-top: 2px solid #dee2e6;">
+
+    <!-- Employees Grid -->
+    <div class="row">
+        <div class="col-12">
+            <div id="employeesGrid"></div>
+        </div>
+    </div>
+
+    <!-- Manage Roles Modal -->
+    <div class="modal fade" id="manageRolesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Roles for Employee <span id="mr-employee-id"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <div id="mr-status" class="text-muted"></div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Available Roles</label>
+                            <div id="mr-roles-list" style="max-height: 420px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: .25rem; padding: .5rem;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Selected Roles</label>
+                            <div id="mr-selected-roles" style="max-height: 420px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: .25rem; padding: .5rem;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="mr-save" class="btn btn-primary">Save Roles</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* Fix Kendo Grid sort icons */
+        .k-grid-header .k-header .k-link .k-icon {
+            font-size: 12px !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+        
+        .k-grid-header .k-header .k-link .k-icon.k-i-sort-asc-sm,
+        .k-grid-header .k-header .k-link .k-icon.k-i-sort-desc-sm {
+            font-size: 12px !important;
+            width: 12px !important;
+            height: 12px !important;
+        }
+        
+        /* Fix filter menu positioning */
+        .k-filter-menu {
+            z-index: 10000 !important;
+        }
+        
+        /* Consistent header styling */
+        .k-grid-header .k-header {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            console.log("Initializing Employees Grid...");
+            
+            // Initialize Kendo Grid
+            $("#employeesGrid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/Employee/GetEmployees",
+                            type: "GET",
+                            dataType: "json"
+                        }
+                    },
+                    schema: {
+                        model: {
+                            id: "id",
+                            fields: {
+                                id: { type: "number" },
+                                firstName: { type: "string" },
+                                lastName: { type: "string" },
+                                fullName: { type: "string" },
+                                email: { type: "string" },
+                                department: { type: "string" },
+                                position: { type: "string" },
+                                isActive: { type: "boolean" },
+                                createdDate: { type: "date" },
+                                rolesCount: { type: "number" }
+                            }
+                        }
+                    },
+                    pageSize: 10
+                },
+                height: 500,
+                sortable: true,
+                filterable: {
+                    mode: "row"
+                },
+                pageable: {
+                    refresh: true,
+                    pageSizes: [5, 10, 20, 50],
+                    buttonCount: 5
+                },
+                columns: [
+                    { field: "id", title: "ID", width: "80px" },
+                    { field: "fullName", title: "Full Name", width: "200px" },
+                    { field: "email", title: "Email", width: "250px" },
+                    { field: "department", title: "Department", width: "150px" },
+                    { field: "position", title: "Position", width: "200px" },
+                    { field: "rolesCount", title: "Roles Count", width: "120px" },
+                    { 
+                        field: "isActive", 
+                        title: "Active", 
+                        width: "100px",
+                        template: "#= isActive ? 'Yes' : 'No' #"
+                    },
+                    { 
+                        field: "createdDate", 
+                        title: "Created Date", 
+                        width: "150px",
+                        template: "#= kendo.toString(kendo.parseDate(createdDate), 'MM/dd/yyyy') #"
+                    },
+                    {
+                        title: "Actions",
+                        width: "200px",
+                        template: "<button class='btn btn-sm btn-info view-details' data-id='#= id #'>View Details</button> " +
+                                 "<button class='btn btn-sm btn-primary manage-roles' data-id='#= id #'>Manage Roles</button>"
+                    }
+                ],
+                dataBound: function(e) {
+                    console.log("Employees Grid data bound. Records:", e.sender.dataSource.data().length);
+                },
+                error: function(e) {
+                    console.error("Employees Grid error:", e);
+                }
+            });
+
+            // Add new employee
+            $("#addEmployeeBtn").click(function () {
+                var firstName = prompt("Enter first name:");
+                if (firstName) {
+                    var lastName = prompt("Enter last name:");
+                    if (lastName) {
+                        var email = prompt("Enter email:");
+                        var department = prompt("Enter department:");
+                        var position = prompt("Enter position:");
+                        
+                        $.ajax({
+                            url: "/Employee/CreateEmployee",
+                            type: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({
+                                FirstName: firstName,
+                                LastName: lastName,
+                                Email: email || "",
+                                Department: department || "",
+                                Position: position || ""
+                            }),
+                            success: function (response) {
+                                if (response.success) {
+                                    alert("Employee created successfully!");
+                                    $("#employeesGrid").data("kendoGrid").dataSource.read();
+                                } else {
+                                    alert("Error: " + response.message);
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                alert("Error creating employee: " + error);
+                            }
+                        });
+                    }
+                }
+            });
+
+            // View employee details
+            $(document).on('click', '.view-details', function () {
+                var employeeId = $(this).data('id');
+                window.location.href = '/Employee/Details/' + employeeId;
+            });
+
+            // Manage employee roles
+            $(document).on('click', '.manage-roles', function () {
+                var employeeId = $(this).data('id');
+                openManageRolesModal(employeeId);
+            });
+
+            function openManageRolesModal(employeeId){
+                $("#mr-employee-id").text(employeeId);
+                $("#mr-status").text("");
+                $("#mr-roles-list").html("Loading roles...");
+                $("#mr-selected-roles").html("");
+
+                // Load all roles and current employee roles
+                $.when(
+                    $.getJSON('/Employee/GetAllRoles'),
+                    $.getJSON('/Employee/GetEmployee', { id: employeeId })
+                ).done(function(allRolesResp, employeeResp){
+                    var allRoles = allRolesResp[0] || [];
+                    var employee = employeeResp[0] || null;
+                    var selectedRoleIds = [];
+                    if (employee && employee.roles){
+                        selectedRoleIds = employee.roles.map(function(r){ return r.id; });
+                    }
+
+                    renderRolesLists(allRoles, selectedRoleIds);
+
+                    var modal = new bootstrap.Modal(document.getElementById('manageRolesModal'));
+                    modal.show();
+
+                    // Save handler
+                    $("#mr-save").off('click').on('click', function(){
+                        var ids = collectSelectedRoleIds();
+                        $.ajax({
+                            url: '/Employee/AssignRolesToEmployee',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ EmployeeId: employeeId, RoleIds: ids }),
+                            success: function(resp){
+                                if (resp && resp.success){
+                                    $("#mr-status").removeClass('text-danger').addClass('text-success').text('Roles saved successfully');
+                                    // Refresh grid to update Roles Count
+                                    var grid = $("#employeesGrid").data('kendoGrid');
+                                    if (grid) { grid.dataSource.read(); }
+                                } else {
+                                    $("#mr-status").removeClass('text-success').addClass('text-danger').text('Error: ' + (resp && resp.message ? resp.message : 'Unknown error'));
+                                }
+                            },
+                            error: function(xhr, status, error){
+                                $("#mr-status").removeClass('text-success').addClass('text-danger').text('Error saving roles: ' + error);
+                            }
+                        });
+                    });
+                }).fail(function(){
+                    alert('Failed to load roles or employee details');
+                });
+            }
+
+            function renderRolesLists(allRoles, selectedRoleIds){
+                var $list = $("#mr-roles-list");
+                var $selected = $("#mr-selected-roles");
+                $list.empty();
+                $selected.empty();
+                // Build checkbox list of all roles
+                allRoles.forEach(function(r){
+                    var id = r.id || r.Id || r.roleId;
+                    var name = r.name || r.Name;
+                    var checked = selectedRoleIds.indexOf(id) !== -1;
+                    var item = '<div class="form-check">'
+                        + '<input class="form-check-input mr-role" type="checkbox" value="'+id+'" id="mr-role-'+id+'" '+(checked?'checked':'')+'> '
+                        + '<label class="form-check-label" for="mr-role-'+id+'">'+name+' (ID: '+id+')</label>'
+                        + '</div>';
+                    $list.append(item);
+                });
+
+                // Render selected summary
+                updateSelectedSummary();
+
+                $(document).off('change', '.mr-role').on('change', '.mr-role', function(){
+                    updateSelectedSummary();
+                });
+            }
+
+            function collectSelectedRoleIds(){
+                var ids = [];
+                $(".mr-role:checked").each(function(){
+                    ids.push(parseInt($(this).val()));
+                });
+                return ids;
+            }
+
+            function updateSelectedSummary(){
+                var ids = collectSelectedRoleIds();
+                var html = ids.length ? ids.join(', ') : '<span class="text-muted">No roles selected</span>';
+                $("#mr-selected-roles").html(html);
+            }
+        });
+    </script>
+}
+
+
+
+
+
+

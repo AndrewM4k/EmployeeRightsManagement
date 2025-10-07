@@ -1,7 +1,5 @@
 C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\appsettings.json
-C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\package-lock.json
-C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\package.json
 C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\EmployeeRightsManagement.staticwebassets.runtime.json
 C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\EmployeeRightsManagement.staticwebassets.endpoints.json
 C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\EmployeeRightsManagement.exe
@@ -137,4 +135,12 @@ C:\Users\Andrew\EmployeeRightsManagement\obj\Debug\net8.0\refint\EmployeeRightsM
 C:\Users\Andrew\EmployeeRightsManagement\obj\Debug\net8.0\EmployeeRightsManagement.pdb
 C:\Users\Andrew\EmployeeRightsManagement\obj\Debug\net8.0\EmployeeRightsManagement.genruntimeconfig.cache
 C:\Users\Andrew\EmployeeRightsManagement\obj\Debug\net8.0\ref\EmployeeRightsManagement.dll
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\frontend\package-lock.json
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\frontend\package.json
+C:\Users\Andrew\EmployeeRightsManagement\obj\Debug\net8.0\EmployeeRightsManagement.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\FluentValidation.dll
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\FluentValidation.AspNetCore.dll
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\FluentValidation.DependencyInjectionExtensions.dll
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\AutoMapper.dll
+C:\Users\Andrew\EmployeeRightsManagement\bin\Debug\net8.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 C:\Users\Andrew\EmployeeRightsManagement\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

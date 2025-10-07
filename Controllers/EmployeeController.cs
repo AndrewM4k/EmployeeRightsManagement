@@ -1,20 +1,20 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.Models;
 using EmployeeRightsManagement.Services;
+using EmployeeRightsManagement.Services.Employees;
 using EmployeeRightsManagement.ViewModels;
 
 namespace EmployeeRightsManagement.Controllers
 {
     public class EmployeeController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IEmployeeService _employeeService;
         private readonly ICurrentUserContext _currentUser;
 
-        public EmployeeController(ApplicationDbContext context, ICurrentUserContext currentUser)
+        public EmployeeController(IEmployeeService employeeService, ICurrentUserContext currentUser)
         {
-            _context = context;
+            _employeeService = employeeService;
             _currentUser = currentUser;
         }
 
@@ -34,24 +34,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployees()
         {
-            var employees = await _context.Employees
-                .Where(e => e.IsActive)
-                .Include(e => e.EmployeeRoles)
-                    .ThenInclude(er => er.Role)
-                .Select(e => new
-                {
-                    e.Id,
-                    e.FirstName,
-                    e.LastName,
-                    e.FullName,
-                    e.Email,
-                    e.Department,
-                    e.Position,
-                    e.IsActive,
-                    e.CreatedDate,
-                    RolesCount = e.EmployeeRoles.Count(er => er.IsActive)
-                })
-                .ToListAsync();
+            var employees = await _employeeService.GetEmployeesAsync();
 
             return Json(employees);
         }
@@ -59,44 +42,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployee(int id)
         {
-            var employee = await _context.Employees
-                .Include(e => e.EmployeeRoles)
-                    .ThenInclude(er => er.Role)
-                        .ThenInclude(r => r.RoleRights)
-                            .ThenInclude(rr => rr.Right)
-                .Where(e => e.Id == id)
-                .Select(e => new
-                {
-                    e.Id,
-                    e.FirstName,
-                    e.LastName,
-                    e.FullName,
-                    e.Email,
-                    e.Department,
-                    e.Position,
-                    e.IsActive,
-                    e.CreatedDate,
-                    Roles = e.EmployeeRoles
-                        .Where(er => er.IsActive)
-                        .Select(er => new
-                        {
-                            er.Role.Id,
-                            er.Role.Name,
-                            er.Role.Description,
-                            er.AssignedDate,
-                            Rights = er.Role.RoleRights
-                                .Where(rr => rr.IsActive)
-                                .Select(rr => new
-                                {
-                                    rr.Right.Id,
-                                    rr.Right.Name,
-                                    rr.Right.Description,
-                                    rr.Right.Category,
-                                    rr.Right.Type
-                                })
-                        })
-                })
-                .FirstOrDefaultAsync();
+            var employee = await _employeeService.GetEmployeeDetailsAsync(id);
 
             return Json(employee);
         }
@@ -104,15 +50,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllRoles()
         {
-            var roles = await _context.Roles
-                .Where(r => r.IsActive)
-                .Select(r => new
-                {
-                    r.Id,
-                    r.Name,
-                    r.Description
-                })
-                .ToListAsync();
+            var roles = await _employeeService.GetAllRolesAsync();
 
             return Json(roles);
         }
@@ -121,42 +59,26 @@ namespace EmployeeRightsManagement.Controllers
         public async Task<IActionResult> CreateEmployee([FromBody] Employee employee)
         {
             if (!_currentUser.IsAdmin) return Forbid();
-            if (ModelState.IsValid)
-            {
-                employee.CreatedDate = DateTime.Now;
-                employee.IsActive = true;
-                _context.Employees.Add(employee);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Employee created successfully", employeeId = employee.Id });
-            }
-            return Json(new { success = false, message = "Invalid data" });
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid data" });
+            var result = await _employeeService.CreateEmployeeAsync(employee);
+            return Json(new { success = result.success, message = result.message, employeeId = result.employeeId });
         }
 
         [HttpPut]
         public async Task<IActionResult> UpdateEmployee([FromBody] Employee employee)
         {
             if (!_currentUser.IsAdmin) return Forbid();
-            if (ModelState.IsValid)
-            {
-                _context.Employees.Update(employee);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Employee updated successfully" });
-            }
-            return Json(new { success = false, message = "Invalid data" });
+            if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid data" });
+            var result = await _employeeService.UpdateEmployeeAsync(employee);
+            return Json(new { success = result.success, message = result.message });
         }
 
         [HttpDelete]
         public async Task<IActionResult> DeleteEmployee(int id)
         {
             if (!_currentUser.IsAdmin) return Forbid();
-            var employee = await _context.Employees.FindAsync(id);
-            if (employee != null)
-            {
-                employee.IsActive = false;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Employee deleted successfully" });
-            }
-            return Json(new { success = false, message = "Employee not found" });
+            var result = await _employeeService.DeleteEmployeeAsync(id);
+            return Json(new { success = result.success, message = result.message });
         }
 
         [HttpPost]
@@ -165,26 +87,8 @@ namespace EmployeeRightsManagement.Controllers
             if (!_currentUser.IsAdmin) return Forbid();
             try
             {
-                // Remove existing roles for this employee
-                var existingRoles = await _context.EmployeeRoles
-                    .Where(er => er.EmployeeId == request.EmployeeId)
-                    .ToListAsync();
-                
-                _context.EmployeeRoles.RemoveRange(existingRoles);
-
-                // Add new roles
-                var employeeRoles = request.RoleIds.Select(roleId => new EmployeeRole
-                {
-                    EmployeeId = request.EmployeeId,
-                    RoleId = roleId,
-                    AssignedDate = DateTime.Now,
-                    IsActive = true
-                });
-
-                _context.EmployeeRoles.AddRange(employeeRoles);
-                await _context.SaveChangesAsync();
-
-                return Json(new { success = true, message = "Roles assigned successfully" });
+                var result = await _employeeService.AssignRolesAsync(request.EmployeeId, request.RoleIds);
+                return Json(new { success = result.success, message = result.message });
             }
             catch (Exception ex)
             {

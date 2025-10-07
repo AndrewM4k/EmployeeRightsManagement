@@ -1,19 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.ViewModels;
 using EmployeeRightsManagement.Services;
+using EmployeeRightsManagement.Services.Employees;
 
 namespace EmployeeRightsManagement.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IEmployeeService _employeeService;
         private readonly ICurrentUserContext _currentUser;
 
-        public HomeController(ApplicationDbContext context, ICurrentUserContext currentUser)
+        public HomeController(IEmployeeService employeeService, ICurrentUserContext currentUser)
         {
-            _context = context;
+            _employeeService = employeeService;
             _currentUser = currentUser;
         }
 
@@ -30,32 +30,7 @@ namespace EmployeeRightsManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> GetEmployees()
         {
-            var employees = await _context.Employees
-                .Where(e => e.IsActive)
-                .Include(e => e.EmployeeRoles)
-                    .ThenInclude(er => er.Role)
-                .Select(e => new EmployeeViewModel
-                {
-                    Id = e.Id,
-                    FirstName = e.FirstName,
-                    LastName = e.LastName,
-                    FullName = e.FullName,
-                    Email = e.Email,
-                    Department = e.Department,
-                    Position = e.Position,
-                    IsActive = e.IsActive,
-                    CreatedDate = e.CreatedDate,
-                    Roles = e.EmployeeRoles
-                        .Where(er => er.IsActive)
-                        .Select(er => new RoleViewModel
-                        {
-                            Id = er.Role.Id,
-                            Name = er.Role.Name,
-                            Description = er.Role.Description,
-                            IsActive = er.Role.IsActive
-                        }).ToList()
-                })
-                .ToListAsync();
+            var employees = await _employeeService.GetEmployeesAsync();
 
             return Json(employees);
         }
@@ -65,57 +40,25 @@ namespace EmployeeRightsManagement.Controllers
         {
             try
             {
-                var query = _context.Employees
-                    .Where(e => e.IsActive)
-                    .AsQueryable();
-
-                if (!string.IsNullOrEmpty(name))
+                // Be flexible: support roleIds passed as repeated query params and/or comma/space-separated in a single value
+                int[] effectiveRoleIds = roleIds ?? Array.Empty<int>();
+                if (effectiveRoleIds.Length == 0)
                 {
-                    query = query.Where(e => e.FirstName.Contains(name) || e.LastName.Contains(name));
-                }
-
-                if (!string.IsNullOrEmpty(role))
-                {
-                    query = query.Where(e => e.EmployeeRoles
-                        .Any(er => er.IsActive && er.Role.Name.Contains(role)));
-                }
-
-                if (roleIds != null && roleIds.Length > 0)
-                {
-                    query = query.Where(e => e.EmployeeRoles
-                        .Any(er => er.IsActive && roleIds.Contains(er.RoleId)));
-                }
-
-                if (!string.IsNullOrEmpty(right))
-                {
-                    query = query.Where(e => e.EmployeeRoles
-                        .Any(er => er.IsActive && er.Role.RoleRights
-                            .Any(rr => rr.IsActive && rr.Right.Name.Contains(right))));
-                }
-
-                var employees = await query
-                    .Select(e => new EmployeeViewModel
+                    var raw = Request.Query["roleIds"]; // may contain multiple entries
+                    var parsed = raw
+                        .SelectMany(v => v.Split(new[] { ',', ' ', ';', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
+                        .Select(s => int.TryParse(s.Trim(), out var id) ? id : (int?)null)
+                        .Where(id => id.HasValue)
+                        .Select(id => id!.Value)
+                        .Distinct()
+                        .ToArray();
+                    if (parsed.Length > 0)
                     {
-                        Id = e.Id,
-                        FirstName = e.FirstName,
-                        LastName = e.LastName,
-                        FullName = e.FullName,
-                        Email = e.Email,
-                        Department = e.Department,
-                        Position = e.Position,
-                        IsActive = e.IsActive,
-                        CreatedDate = e.CreatedDate,
-                        Roles = e.EmployeeRoles
-                            .Where(er => er.IsActive)
-                            .Select(er => new RoleViewModel
-                            {
-                                Id = er.Role.Id,
-                                Name = er.Role.Name,
-                                Description = er.Role.Description,
-                                IsActive = er.Role.IsActive
-                            }).ToList()
-                    })
-                    .ToListAsync();
+                        effectiveRoleIds = parsed;
+                    }
+                }
+
+                var employees = await _employeeService.SearchEmployeesAsync(name, role, right, effectiveRoleIds);
 
                 return Json(employees);
             }
