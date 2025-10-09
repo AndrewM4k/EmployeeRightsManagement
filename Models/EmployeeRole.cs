@@ -1,6 +1,7 @@
 namespace EmployeeRightsManagement.Models
-{
-    public class EmployeeRole
+{// ReSharper disable PropertyCanBeMadeInitOnly.Global
+
+    public sealed class EmployeeRole
     {
         public int EmployeeId { get; set; }
         public int RoleId { get; set; }
@@ -8,7 +9,7 @@ namespace EmployeeRightsManagement.Models
         public bool IsActive { get; set; } = true;
         
         // Navigation properties
-        public virtual Employee Employee { get; set; } = null!;
-        public virtual Role Role { get; set; } = null!;
+        public Employee Employee { get; set; } = null!;
+        public Role Role { get; set; } = null!;
     }
 }

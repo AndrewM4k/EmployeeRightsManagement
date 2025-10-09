@@ -1,3 +1,4 @@
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 namespace EmployeeRightsManagement.Options
 {
     public class ConnectionStringsOptions

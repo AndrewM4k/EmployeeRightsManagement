@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Models;
 using EmployeeRightsManagement.Services;
 using EmployeeRightsManagement.Services.Rights;
@@ -11,6 +10,7 @@ namespace EmployeeRightsManagement.Controllers
         private readonly IRightService _rightService;
         private readonly ICurrentUserContext _currentUser;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public RightsController(IRightService rightService, ICurrentUserContext currentUser)
         {
             _rightService = rightService;
@@ -49,7 +49,7 @@ namespace EmployeeRightsManagement.Controllers
             if (!_currentUser.IsAdmin) return Forbid();
             if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid data" });
             var result = await _rightService.CreateRightAsync(right);
-            return Json(new { success = result.success, message = result.message });
+            return Json(new { result.success, result.message });
         }
 
         [HttpPut]
@@ -58,7 +58,7 @@ namespace EmployeeRightsManagement.Controllers
             if (!_currentUser.IsAdmin) return Forbid();
             if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid data" });
             var result = await _rightService.UpdateRightAsync(right);
-            return Json(new { success = result.success, message = result.message });
+            return Json(new { result.success, result.message });
         }
 
         [HttpDelete]
@@ -66,7 +66,7 @@ namespace EmployeeRightsManagement.Controllers
         {
             if (!_currentUser.IsAdmin) return Forbid();
             var result = await _rightService.DeleteRightAsync(id);
-            return Json(new { success = result.success, message = result.message });
+            return Json(new { result.success, result.message });
         }
     }
 }

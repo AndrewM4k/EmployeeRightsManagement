@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EmployeeRightsManagement.ViewModels;
 using EmployeeRightsManagement.Services;
 using EmployeeRightsManagement.Services.Employees;
 
@@ -11,6 +9,7 @@ namespace EmployeeRightsManagement.Controllers
         private readonly IEmployeeService _employeeService;
         private readonly ICurrentUserContext _currentUser;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public HomeController(IEmployeeService employeeService, ICurrentUserContext currentUser)
         {
             _employeeService = employeeService;
@@ -40,8 +39,7 @@ namespace EmployeeRightsManagement.Controllers
         {
             try
             {
-                // Be flexible: support roleIds passed as repeated query params and/or comma/space-separated in a single value
-                int[] effectiveRoleIds = roleIds ?? Array.Empty<int>();
+                int[] effectiveRoleIds = roleIds ?? [];
                 if (effectiveRoleIds.Length == 0)
                 {
                     var raw = Request.Query["roleIds"]; // may contain multiple entries

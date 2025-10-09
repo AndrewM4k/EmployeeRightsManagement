@@ -1,7 +1,6 @@
 using AutoMapper;
 using EmployeeRightsManagement.DTOs;
 using EmployeeRightsManagement.Models;
-using System.Linq;
 
 namespace EmployeeRightsManagement.Mapping
 {

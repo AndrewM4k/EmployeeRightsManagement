@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Models;
 using EmployeeRightsManagement.Services;
 using EmployeeRightsManagement.Services.Roles;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EmployeeRightsManagement.Controllers
 {
@@ -69,7 +68,7 @@ namespace EmployeeRightsManagement.Controllers
             if (!_currentUser.IsAdmin) return Forbid();
             if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid data" });
             var result = await _roleService.CreateRoleAsync(role);
-            return Json(new { success = result.success, message = result.message, roleId = result.roleId });
+            return Json(new { result.success, result.message, result.roleId });
         }
 
         [HttpPut]
@@ -78,7 +77,7 @@ namespace EmployeeRightsManagement.Controllers
             if (!_currentUser.IsAdmin) return Forbid();
             if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid data" });
             var result = await _roleService.UpdateRoleAsync(role);
-            return Json(new { success = result.success, message = result.message });
+            return Json(new { result.success, result.message });
         }
 
         [HttpDelete]
@@ -86,7 +85,7 @@ namespace EmployeeRightsManagement.Controllers
         {
             if (!_currentUser.IsAdmin) return Forbid();
             var result = await _roleService.DeleteRoleAsync(id);
-            return Json(new { success = result.success, message = result.message });
+            return Json(new { result.success, result.message });
         }
 
         [HttpPost]
@@ -95,14 +94,14 @@ namespace EmployeeRightsManagement.Controllers
             if (!_currentUser.IsAdmin) return Forbid();
             
             var result = await _roleService.AssignRightsAsync(request.RoleId, request.RightIds);
-            return Json(new { success = result.success, message = result.message });
+            return Json(new { result.success, result.message });
         }
     }
 
     public class AssignRightsRequest
     {
         public int RoleId { get; set; }
-        public List<int> RightIds { get; set; } = new List<int>();
+        public List<int> RightIds { get; set; } = [];
     }
 }
 

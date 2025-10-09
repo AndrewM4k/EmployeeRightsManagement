@@ -8,6 +8,7 @@ namespace EmployeeRightsManagement.Repositories
     {
         private readonly ApplicationDbContext _dbContext;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public RightRepository(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
@@ -39,7 +40,3 @@ namespace EmployeeRightsManagement.Repositories
         }
     }
 }
-
-
-
-

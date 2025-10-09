@@ -1,5 +1,4 @@
 using EmployeeRightsManagement.Models;
-using System.Linq.Expressions;
 
 namespace EmployeeRightsManagement.Repositories
 {

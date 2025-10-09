@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Models;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 namespace EmployeeRightsManagement.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        // ReSharper disable once ConvertToPrimaryConstructor
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -55,8 +58,6 @@ namespace EmployeeRightsManagement.Data
                 .WithMany()
                 .HasForeignKey(au => au.EmployeeId)
                 .OnDelete(DeleteBehavior.Restrict);
-
         }
-
     }
 }

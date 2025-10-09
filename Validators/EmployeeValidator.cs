@@ -3,6 +3,7 @@ using FluentValidation;
 
 namespace EmployeeRightsManagement.Validators
 {
+    // ReSharper disable once ClassNeverInstantiated.Global
     public class EmployeeValidator : AbstractValidator<Employee>
     {
         public EmployeeValidator()

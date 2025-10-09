@@ -11,6 +11,7 @@ namespace EmployeeRightsManagement.Services
         public bool IsAdmin { get; }
         public string RoleName { get; }
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public DemoCurrentUserContext(string roleName)
         {
             RoleName = roleName;

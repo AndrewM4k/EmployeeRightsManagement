@@ -4,6 +4,7 @@ namespace EmployeeRightsManagement.Middleware
     {
         private readonly RequestDelegate _next;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public ResponseCachingHeadersMiddleware(RequestDelegate next)
         {
             _next = next;

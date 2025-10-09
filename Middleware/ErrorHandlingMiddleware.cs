@@ -7,6 +7,7 @@ namespace EmployeeRightsManagement.Middleware
         private readonly RequestDelegate _next;
         private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
         {
             _next = next;

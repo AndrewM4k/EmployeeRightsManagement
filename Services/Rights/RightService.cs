@@ -12,6 +12,7 @@ namespace EmployeeRightsManagement.Services.Rights
         private readonly IRightRepository _rightRepository;
         private readonly IMapper _mapper;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public RightService(IRightRepository rightRepository, IMapper mapper)
         {
             _rightRepository = rightRepository;

@@ -1,7 +1,6 @@
 using EmployeeRightsManagement.Data;
 using EmployeeRightsManagement.Models;
 using EmployeeRightsManagement.Repositories;
-using EmployeeRightsManagement.ViewModels;
 using EmployeeRightsManagement.DTOs;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -15,6 +14,7 @@ namespace EmployeeRightsManagement.Services.Employees
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IMapper _mapper;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public EmployeeService(ApplicationDbContext dbContext, IEmployeeRepository employeeRepository, IMapper mapper)
         {
             _dbContext = dbContext;

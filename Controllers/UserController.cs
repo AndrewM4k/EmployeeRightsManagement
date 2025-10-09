@@ -9,6 +9,7 @@ namespace EmployeeRightsManagement.Controllers
         private readonly IUserService _userService;
         private readonly ICurrentUserContext _currentUser;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public UserController(IUserService userService, ICurrentUserContext currentUser)
         {
             _userService = userService;

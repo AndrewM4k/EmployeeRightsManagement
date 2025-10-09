@@ -15,6 +15,7 @@ namespace EmployeeRightsManagement.Services.Roles
         private readonly IRightRepository _rightRepository;
         private readonly IMapper _mapper;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public RoleService(ApplicationDbContext dbContext, IRoleRepository roleRepository, IRightRepository rightRepository, IMapper mapper)
         {
             _dbContext = dbContext;
@@ -72,7 +73,7 @@ namespace EmployeeRightsManagement.Services.Roles
 
         public async Task<(bool success, string message)> AssignRightsAsync(int roleId, IEnumerable<int> rightIds)
         {
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
                 // Get existing active role rights

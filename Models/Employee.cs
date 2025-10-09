@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace EmployeeRightsManagement.Models
 {
-    public class Employee
+    public sealed class Employee
     {
         public int Id { get; set; }
         
@@ -27,10 +28,8 @@ namespace EmployeeRightsManagement.Models
         
         public DateTime CreatedDate { get; set; } = DateTime.Now;
         
-        // Navigation properties
-        public virtual ICollection<EmployeeRole> EmployeeRoles { get; set; } = new List<EmployeeRole>();
+        public ICollection<EmployeeRole> EmployeeRoles { get; set; } = new List<EmployeeRole>();
         
-        // Computed property for full name
         public string FullName => $"{FirstName} {LastName}";
     }
 }

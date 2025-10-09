@@ -7,6 +7,7 @@ namespace EmployeeRightsManagement.Services.Users
     {
         private readonly ApplicationDbContext _dbContext;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public UserService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
@@ -16,9 +17,10 @@ namespace EmployeeRightsManagement.Services.Users
         {
             int targetEmployeeId = isAdmin ? 1 : 3;
 
+            var id = targetEmployeeId;
             var employee = await _dbContext.Employees
                 .AsNoTracking()
-                .Where(e => e.IsActive && e.Id == targetEmployeeId)
+                .Where(e => e.IsActive && e.Id == id)
                 .Select(e => new
                 {
                     id = e.Id,
@@ -97,12 +99,12 @@ namespace EmployeeRightsManagement.Services.Users
                     g => g.Key,
                     g => g.Select(r => (object)new
                     {
-                        id = r.id,
-                        name = r.name,
-                        description = r.description,
-                        category = r.category,
-                        type = r.type,
-                        assignedDate = r.assignedDate
+                        r.id,
+                        r.name,
+                        r.description,
+                        r.category,
+                        r.type,
+                        r.assignedDate
                     }).ToList()
                 );
 

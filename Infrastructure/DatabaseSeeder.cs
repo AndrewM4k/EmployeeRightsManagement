@@ -53,7 +53,7 @@ namespace EmployeeRightsManagement.Infrastructure
 
                 var roleRights = new List<RoleRight>();
                 var random = new Random(42);
-                for (int roleId = 1; roleId <= 5; roleId++)
+                for (var roleId = 1; roleId <= 5; roleId++)
                 {
                     var rightsCount = roleId == 1 ? 200 : roleId == 2 ? 150 : roleId == 3 ? 50 : roleId == 4 ? 100 : 75;
                     var selectedRights = Enumerable.Range(1, 200).OrderBy(x => random.Next()).Take(rightsCount);

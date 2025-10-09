@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using EmployeeRightsManagement.Models;
 using EmployeeRightsManagement.Services;
 using EmployeeRightsManagement.Services.Employees;
-using EmployeeRightsManagement.ViewModels;
 
 namespace EmployeeRightsManagement.Controllers
 {
@@ -12,6 +10,7 @@ namespace EmployeeRightsManagement.Controllers
         private readonly IEmployeeService _employeeService;
         private readonly ICurrentUserContext _currentUser;
 
+        // ReSharper disable once ConvertToPrimaryConstructor
         public EmployeeController(IEmployeeService employeeService, ICurrentUserContext currentUser)
         {
             _employeeService = employeeService;
@@ -100,7 +99,7 @@ namespace EmployeeRightsManagement.Controllers
     public class AssignRolesRequest
     {
         public int EmployeeId { get; set; }
-        public List<int> RoleIds { get; set; } = new List<int>();
+        public List<int> RoleIds { get; set; } = [];
     }
 }
 

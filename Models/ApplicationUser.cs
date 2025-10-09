@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Identity;
+// ReSharper disable PropertyCanBeMadeInitOnly.Global
 
 namespace EmployeeRightsManagement.Models
 {
-    public class ApplicationUser : IdentityUser
+    public sealed class ApplicationUser : IdentityUser
     {
         public int? EmployeeId { get; set; }
-        public virtual Employee? Employee { get; set; }
+        public Employee? Employee { get; set; }
         public bool IsAdmin { get; set; } = false;
     }
 }
