@@ -13,8 +13,10 @@ namespace EmployeeRightsManagement.Mapping
                 .ForMember(d => d.RolesCount, o => o.MapFrom(s => s.EmployeeRoles.Count(er => er.IsActive)));
 
             CreateMap<Employee, EmployeeDetailsDto>()
-                .ForMember(d => d.Roles, o => o.MapFrom(s => s.EmployeeRoles.Where(er => er.IsActive)));
+                .ForMember(d => d.Roles, o => o.MapFrom(s => s.EmployeeRoles.Where(er => er.IsActive).Select(er => er.Role)));
             CreateMap<Role, RoleBasicDto>();
+            CreateMap<Role, EmployeeRoleWithRightsDto>()
+                .ForMember(d => d.Rights, o => o.MapFrom(s => s.RoleRights.Where(rr => rr.IsActive).Select(rr => rr.Right)));
             CreateMap<Employee, EmployeeWithRolesDto>()
                 .ForMember(d => d.Roles, o => o.MapFrom(s => s.EmployeeRoles.Where(er => er.IsActive).Select(er => er.Role)));
             CreateMap<EmployeeRole, EmployeeRoleDto>()
@@ -22,12 +24,6 @@ namespace EmployeeRightsManagement.Mapping
                 .ForMember(d => d.Name, o => o.MapFrom(s => s.Role.Name))
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Role.Description))
                 .ForMember(d => d.AssignedDate, o => o.MapFrom(s => s.AssignedDate));
-            CreateMap<EmployeeRole, EmployeeRoleWithRightsDto>()
-                .ForMember(d => d.Id, o => o.MapFrom(s => s.RoleId))
-                .ForMember(d => d.Name, o => o.MapFrom(s => s.Role.Name))
-                .ForMember(d => d.Description, o => o.MapFrom(s => s.Role.Description))
-                .ForMember(d => d.AssignedDate, o => o.MapFrom(s => s.AssignedDate))
-                .ForMember(d => d.Rights, o => o.MapFrom(s => s.Role.RoleRights.Where(rr => rr.IsActive)));
             CreateMap<RoleRight, EmployeeRightDto>()
                 .ForMember(d => d.Id, o => o.MapFrom(s => s.RightId))
                 .ForMember(d => d.Name, o => o.MapFrom(s => s.Right.Name))
@@ -47,6 +43,7 @@ namespace EmployeeRightsManagement.Mapping
                 .ForMember(d => d.AssignedDate, o => o.MapFrom(s => s.AssignedDate));
 
             CreateMap<Right, RightListDto>();
+            CreateMap<Right, EmployeeRightDto>();
         }
     }
 }

@@ -142,13 +142,21 @@
                 type: "GET",
                 success: function (data) {
                     console.log("Role data:", data);
+                    console.log("Role rights:", data?.rights);
                     
                     if (data) {
                         $("#roleName").val(data.name);
                         $("#roleDescription").val(data.description);
                         
                         // Store currently assigned rights
-                        selectedRights = data.rights.map(r => r.id);
+                        selectedRights = data.rights ? data.rights.map(r => r.id) : [];
+                        console.log("Selected rights IDs:", selectedRights);
+                        
+                        // Refresh the rights grid to update checkboxes
+                        var grid = $("#rightsGrid").data("kendoGrid");
+                        if (grid) {
+                            grid.refresh();
+                        }
                     }
                 },
                 error: function (xhr, status, error) {
@@ -212,7 +220,7 @@
                     {
                         title: "Select",
                         width: "80px",
-                        template: "<input type='checkbox' class='right-checkbox' data-right-id='#= id #' #= selectedRights.indexOf(id) !== -1 ? 'checked' : '' # />"
+                        template: "<input type='checkbox' class='right-checkbox' data-right-id='#= id #' />"
                     },
                     { field: "name", title: "Right Name", width: "200px" },
                     { field: "description", title: "Description", width: "300px" },
@@ -223,7 +231,9 @@
                     // Update checkboxes based on selected rights
                     $('.right-checkbox').each(function() {
                         var rightId = parseInt($(this).data('right-id'));
-                        $(this).prop('checked', selectedRights.indexOf(rightId) !== -1);
+                        var isSelected = selectedRights.indexOf(rightId) !== -1;
+                        $(this).prop('checked', isSelected);
+                        console.log(`Right ${rightId}: ${isSelected ? 'checked' : 'unchecked'}`);
                     });
                 }
             });
@@ -305,6 +315,9 @@
 
         // Save rights assignment
         $("#saveRightsBtn").click(function() {
+            console.log("Saving rights for role:", roleId);
+            console.log("Selected rights:", selectedRights);
+            
             var rightsData = {
                 RoleId: roleId,
                 RightIds: selectedRights
@@ -316,13 +329,17 @@
                 contentType: "application/json",
                 data: JSON.stringify(rightsData),
                 success: function(response) {
+                    console.log("Save response:", response);
                     if (response.success) {
                         alert("Rights assigned successfully!");
+                        // Reload the role data to refresh the checkboxes
+                        loadRoleData();
                     } else {
                         alert("Error: " + response.message);
                     }
                 },
                 error: function(xhr, status, error) {
+                    console.error("Error saving rights:", error);
                     alert("Error assigning rights: " + error);
                 }
             });

@@ -35,7 +35,7 @@ namespace EmployeeRightsManagement.Services.Roles
         public async Task<object?> GetRoleAsync(int id)
         {
             return await _roleRepository.Query()
-                .Include(r => r.RoleRights)
+                .Include(r => r.RoleRights.Where(rr => rr.IsActive))
                     .ThenInclude(rr => rr.Right)
                 .Where(r => r.Id == id)
                 .ProjectTo<RoleDetailsDto>(_mapper.ConfigurationProvider)
@@ -72,19 +72,62 @@ namespace EmployeeRightsManagement.Services.Roles
 
         public async Task<(bool success, string message)> AssignRightsAsync(int roleId, IEnumerable<int> rightIds)
         {
-            var existing = await _dbContext.RoleRights.Where(rr => rr.RoleId == roleId).ToListAsync();
-            _dbContext.RoleRights.RemoveRange(existing);
-
-            var toAdd = rightIds.Select(rid => new RoleRight
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
             {
-                RoleId = roleId,
-                RightId = rid,
-                AssignedDate = DateTime.Now,
-                IsActive = true
-            });
-            await _dbContext.RoleRights.AddRangeAsync(toAdd);
-            await _dbContext.SaveChangesAsync();
-            return (true, "Rights assigned successfully");
+                // Get existing active role rights
+                var existing = await _dbContext.RoleRights
+                    .Where(rr => rr.RoleId == roleId && rr.IsActive)
+                    .ToListAsync();
+                
+                // Mark existing as inactive instead of deleting
+                foreach (var existingRight in existing)
+                {
+                    existingRight.IsActive = false;
+                }
+
+                // Get the list of right IDs to add
+                var rightIdsList = rightIds.ToList();
+                
+                // Check if any of the rights to add already exist (even if inactive)
+                var existingRights = await _dbContext.RoleRights
+                    .Where(rr => rr.RoleId == roleId && rightIdsList.Contains(rr.RightId))
+                    .ToListAsync();
+
+                // Reactivate existing rights that are being reassigned
+                foreach (var existingRight in existingRights)
+                {
+                    if (rightIdsList.Contains(existingRight.RightId))
+                    {
+                        existingRight.IsActive = true;
+                        existingRight.AssignedDate = DateTime.Now;
+                        rightIdsList.Remove(existingRight.RightId); // Remove from list to avoid duplicates
+                    }
+                }
+
+                // Add only new role rights (those that don't already exist)
+                var toAdd = rightIdsList.Select(rid => new RoleRight
+                {
+                    RoleId = roleId,
+                    RightId = rid,
+                    AssignedDate = DateTime.Now,
+                    IsActive = true
+                });
+                
+                if (toAdd.Any())
+                {
+                    await _dbContext.RoleRights.AddRangeAsync(toAdd);
+                }
+                
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return (true, "Rights assigned successfully");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return (false, $"Error assigning rights: {ex.Message}");
+            }
         }
 
         public async Task<List<object>> GetAllRightsAsync()

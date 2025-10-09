@@ -33,14 +33,18 @@ namespace EmployeeRightsManagement.Services.Employees
 
         public async Task<EmployeeDetailsDto?> GetEmployeeDetailsAsync(int id)
         {
-            return await _employeeRepository.Query()
-                .Include(e => e.EmployeeRoles)
+            var employee = await _employeeRepository.Query()
+                .Include(e => e.EmployeeRoles.Where(er => er.IsActive))
                     .ThenInclude(er => er.Role)
-                        .ThenInclude(r => r.RoleRights)
+                        .ThenInclude(r => r.RoleRights.Where(rr => rr.IsActive))
                             .ThenInclude(rr => rr.Right)
                 .Where(e => e.Id == id)
-                .ProjectTo<EmployeeDetailsDto>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
+
+            if (employee == null)
+                return null;
+
+            return _mapper.Map<EmployeeDetailsDto>(employee);
         }
 
         public async Task<List<RoleListDto>> GetAllRolesAsync()

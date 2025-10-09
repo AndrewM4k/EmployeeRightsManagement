@@ -93,15 +93,9 @@ namespace EmployeeRightsManagement.Controllers
         public async Task<IActionResult> AssignRightsToRole([FromBody] AssignRightsRequest request)
         {
             if (!_currentUser.IsAdmin) return Forbid();
-            try
-            {
-                var result = await _roleService.AssignRightsAsync(request.RoleId, request.RightIds);
-                return Json(new { success = result.success, message = result.message });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "Error assigning rights: " + ex.Message });
-            }
+            
+            var result = await _roleService.AssignRightsAsync(request.RoleId, request.RightIds);
+            return Json(new { success = result.success, message = result.message });
         }
     }
 

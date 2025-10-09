@@ -122,6 +122,13 @@
                 type: "GET",
                 success: function (data) {
                     console.log("Employee details data:", data);
+                    console.log("Roles data:", data?.roles);
+                    if (data?.roles) {
+                        data.roles.forEach(function(role, index) {
+                            console.log(`Role ${index}:`, role);
+                            console.log(`Role ${index} rights:`, role.rights);
+                        });
+                    }
                     
                     if (data) {
                         displayEmployeeInfo(data);
